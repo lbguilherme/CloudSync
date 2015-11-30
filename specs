@@ -1,0 +1,5 @@
+MAIN COMPONENTS:
+	1) an unified interface to remote storages.  there will be many
+	2) a local compact and fast database for storing the whole or part of the remote file system. it should at least store and keep in sync all metadata
+	3) virtual file system mounters. This will create a filesystem on the machine that is indistinguishable from a pendrive. every file operation will be computed with the help of 2, and may result in effects on 1
+	4) a management UI for controlling all this stuff. Something simple, just for creating accounts, mounting folders, seeing stats, changing configs and so on. Maybe where will be a TUI too

@@ -3,7 +3,7 @@
 
 class CloudEntry {
 public:
-    std::string name() {
+    inline const std::string& name() const {
         return _name;
     }
 
