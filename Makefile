@@ -8,11 +8,15 @@ OBJDIR := build/obj
 DEPDIR := build/dep
 LIBDIR := build/lib
 MODULESLIBS := $(patsubst %,$(LIBDIR)/lib%.so,$(MODULES))
-INCLUDES := -Iinclude -I$(POCO)/Foundation/include -I$(POCO)/Data/include
+INCLUDES := \
+	-Iinclude \
+	-I$(POCO)/Foundation/include \
+	-I$(POCO)/Data/include \
+	-I$(POCO)/Data/SQLite/include
 
 CXX := clang
 CXXFLAGS := -std=c++14 -O3 -fPIC $(INCLUDES)
-LINK := clang
+LINK := $(CXX)
 LINKFLAGS := -lstdc++
 
 MAINOBJS := $(patsubst src/%.cpp,$(OBJDIR)/%.o,$(wildcard src/*.cpp))
@@ -34,18 +38,23 @@ $(foreach module,$(MODULES),$(eval $(call MakeModuleRule,$(module))))
 
 $(DEPDIR)/%.d:
 	@mkdir -p $(dir $@)
-	@g++ -nostdinc -std=c++14 -Iinclude -MF$@ -MG -MM -MP -MT$@ -MT$(patsubst $(DEPDIR)/%.d,$(OBJDIR)/%.o,$@) $(patsubst $(DEPDIR)/%.d,src/%.cpp,$@)
+	@g++ -nostdinc -std=c++14 -Iinclude -MF$@ -MG -MM -MP -MT$@ \
+		-MT$(patsubst $(DEPDIR)/%.d,$(OBJDIR)/%.o,$@) $(patsubst $(DEPDIR)/%.d,src/%.cpp,$@)
 
 -include $(patsubst src/%.cpp,$(DEPDIR)/%.d,$(ALLSRCS))
 
-$(OBJDIR)/%.o: src/%.cpp
+$(OBJDIR)/%.o: src/%.cpp $(POCO)
 	@mkdir -p $(dir $@)
 	@echo Compiling $<...
 	@$(CXX) $(CXXFLAGS) $< -c -o $@
 
 .PHONY: clean
 clean:
-	rm -rf build
+	rm -rf build $(MAIN)
+
+.PHONY: distclean
+distclean: clean
+	rm -rf lib
 
 
 # Poco:
@@ -53,12 +62,12 @@ clean:
 POCO_OMIT := Crypto,CppUnit,Data/MySQL,Data/ODBC,MongoDB,PageCompiler,Util,XML,
 
 $(POCO): $(POCO).tar
-	mkdir -p lib
-	cd lib && tar -xf ../$^
-	cd $@ && ./configure --no-tests --no-samples --shared --omit=$(POCO_OMIT)
-	$(MAKE) -C $@ CC=clang CXX=clang++ LINKFLAGS="-lstdc++"
+	@mkdir -p lib
+	@cd lib && tar -xf ../$^
+	@cd $@ && ./configure --no-tests --no-samples --shared --omit=$(POCO_OMIT)
+	@$(MAKE) -C $@ CC=$(CXX) CXX=$(CXX) LINKFLAGS="-lstdc++"
 
 $(POCO).tar:
-	mkdir -p lib
-	cd lib && wget http://pocoproject.org/releases/poco-$(POCO_VER)/poco-$(POCO_VER)-all.tar.gz
-	gunzip $(POCO).tar.gz
+	@mkdir -p lib
+	@cd lib && wget http://pocoproject.org/releases/poco-$(POCO_VER)/poco-$(POCO_VER)-all.tar.gz
+	@gunzip $(POCO).tar.gz
