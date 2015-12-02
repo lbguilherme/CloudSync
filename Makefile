@@ -27,7 +27,7 @@ LINKPOCO := -L$(POCO)/lib/Linux/x86_64 -lPocoFoundationd -lPocoNetd -lPocoNetSSL
 
 $(MAIN): $(MAINOBJS) $(MODULESLIBS) $(POCO)
 	@echo Creating $@...
-	@$(LINK) $(LINKFLAGS) $(MAINOBJS) -o $@ $(LINKMODULES) $(LINKPOCO)
+	@$(LINK) $(LINKFLAGS) $(MAINOBJS) -o $@ $(LINKMODULES) $(LINKPOCO) -ldl
 
 define MakeModuleRule
 lib$(1).so: $(patsubst src/%.cpp,$(OBJDIR)/%.o,$(wildcard src/$(1)/*.cpp))

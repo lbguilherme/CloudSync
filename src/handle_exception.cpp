@@ -3,6 +3,8 @@
 #include <iostream>
 #include <iomanip>
 #include <regex>
+#include <dlfcn.h>
+#include <unistd.h>
 using namespace std;
 
 static void replace(string& s, const string& toReplace, const string& replaceWith) {
@@ -28,6 +30,40 @@ static string demangle(string symbol) {
     return symbol;
 }
 
+static string exec(const string& cmd) {
+    shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
+    if (!pipe)
+        return "ERROR";
+    char buffer[128];
+    string result = "";
+    while (!feof(pipe.get())) {
+        if (fgets(buffer, 128, pipe.get()) != NULL)
+            result += buffer;
+    }
+    return result;
+}
+
+string pwd() {
+    char buf[999];
+    getcwd(buf, 999);
+    return buf;
+}
+
+static void cleanpath(string& path) {
+    if (path.size() > 0 && *path.rbegin() == '\n')
+        path.pop_back();
+
+    if (path.find(pwd()) != string::npos) {
+        replace(path, pwd() + "/", "");
+        path = "\033[1;37m" + path + "\033[0m";
+    }
+
+    int n = 10;
+    while (n--) {
+        path = regex_replace(path, regex("/(.*?)/../"), "/");
+    }
+}
+
 void handle_exception() {
     cerr << "\n\n########## Exception ##########\n\n";
 
@@ -35,7 +71,7 @@ void handle_exception() {
         if (current_exception()) {
             rethrow_exception(current_exception());
         }
-    } catch (const std::exception& e) {
+    } catch (const exception& e) {
         string name = demangle(typeid(e).name());
         cout << "Caught exception "
              << "\033[1;33m" << name << "\033[0m";
@@ -67,6 +103,25 @@ void handle_exception() {
             string symbol = match[2];
             string delta = match[3];
             string addr = match[4];
+            string source;
+
+            void* addrptr;
+            stringstream ss(addr);
+            ss >> hex >> addrptr;
+            unsigned long symbolAddr = (unsigned long)addrptr;
+
+            Dl_info info;
+            dladdr(addrptr, &info);
+            if (info.dli_saddr) {
+                symbolAddr = (unsigned long)addrptr - (unsigned long)info.dli_fbase;
+            }
+
+            stringstream command;
+            command << "addr2line 0x" << hex << symbolAddr << " -e " << path;
+            source = exec(command.str());
+            if (source.size() > 0 && source[0] == '?')
+                source = "";
+            cleanpath(source);
 
             cerr << "\033[0;31m"
                  << "0x" << setw(12) << setfill('0') << addr << setw(0) << ": "
@@ -82,6 +137,7 @@ void handle_exception() {
             }
 
             cerr << endl;
+            cerr << "\t" << source << endl;
         } else {
             cerr << stack[i] << endl;
         }
