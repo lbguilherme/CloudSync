@@ -88,3 +88,7 @@ void handle_exception() {
     }
     cerr << endl;
 }
+
+__attribute__((constructor)) static void setup_exception_handler() {
+    set_terminate(handle_exception);
+}
