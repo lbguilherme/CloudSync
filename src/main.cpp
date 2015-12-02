@@ -4,7 +4,10 @@
 #include <iostream>
 using namespace std;
 
+void handle_exception();
+
 int main() {
+    set_terminate(handle_exception);
     // Poco::Data::SQLite::Connector::registerConnector();
 
     // RemoteStorage::createDatabase("dropbox-test.db");
