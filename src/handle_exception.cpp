@@ -87,5 +87,4 @@ void handle_exception() {
         }
     }
     cerr << endl;
-    abort();
 }
