@@ -6,30 +6,31 @@ ALLSRCS := $(shell find src/ -type f -name "*.cpp")
 MAIN := main
 OBJDIR := build/obj
 DEPDIR := build/dep
-LIBDIR := build/lib
-MODULESLIBS := $(patsubst %,$(LIBDIR)/lib%.so,$(MODULES))
+MODULESLIBS := $(patsubst %,lib%.so,$(MODULES))
 INCLUDES := \
 	-Iinclude \
 	-I$(POCO)/Foundation/include \
+	-I$(POCO)/Crypto/include \
+	-I$(POCO)/Net/include \
+	-I$(POCO)/NetSSL_OpenSSL/include \
 	-I$(POCO)/Data/include \
 	-I$(POCO)/Data/SQLite/include
 
 CXX := clang
-CXXFLAGS := -std=c++14 -O3 -fPIC $(INCLUDES)
+CXXFLAGS := -std=c++14 -g3 -fPIC $(INCLUDES) -fcolor-diagnostics
 LINK := $(CXX)
-LINKFLAGS := -lstdc++
+LINKFLAGS := -g3 -lstdc++ -Wl,-rpath,. -Wl,-rpath,./$(POCO)/lib/Linux/x86_64 -fcolor-diagnostics
 
 MAINOBJS := $(patsubst src/%.cpp,$(OBJDIR)/%.o,$(wildcard src/*.cpp))
-LINKMODULES := -L$(LIBDIR) $(patsubst %,-l%,$(MODULES))
-LINKPOCO := -L$(POCO)/lib/Linux/x86_64 -lPocoFoundation -lPocoData -lPocoDataSQLite
+LINKMODULES := -L. -lRemoteStorage
+LINKPOCO := -L$(POCO)/lib/Linux/x86_64 -lPocoFoundationd -lPocoNetd -lPocoNetSSLd -lPocoDatad
 
 $(MAIN): $(MAINOBJS) $(MODULESLIBS) $(POCO)
 	@echo Creating $@...
 	@$(LINK) $(LINKFLAGS) $(MAINOBJS) -o $@ $(LINKMODULES) $(LINKPOCO)
 
 define MakeModuleRule
-$(LIBDIR)/lib$(1).so: $(patsubst src/%.cpp,$(OBJDIR)/%.o,$(wildcard src/$(1)/*.cpp))
-	@mkdir -p $$(dir $$@)
+lib$(1).so: $(patsubst src/%.cpp,$(OBJDIR)/%.o,$(wildcard src/$(1)/*.cpp))
 	@echo Linking $$@...
 	@$(LINK) --shared $(LINKFLAGS) $$^ -o $$@
 endef
@@ -43,23 +44,22 @@ $(DEPDIR)/%.d:
 
 -include $(patsubst src/%.cpp,$(DEPDIR)/%.d,$(ALLSRCS))
 
-$(OBJDIR)/%.o: src/%.cpp $(POCO)
+$(OBJDIR)/%.o: src/%.cpp $(POCO) Makefile
 	@mkdir -p $(dir $@)
 	@echo Compiling $<...
 	@$(CXX) $(CXXFLAGS) $< -c -o $@
 
 .PHONY: clean
 clean:
-	rm -rf build $(MAIN)
+	rm -rf build $(MAIN) $(MODULESLIBS)
 
 .PHONY: distclean
 distclean: clean
 	rm -rf lib
 
-
 # Poco:
 
-POCO_OMIT := Crypto,CppUnit,Data/MySQL,Data/ODBC,MongoDB,PageCompiler,Util,XML,
+POCO_OMIT := CppUnit,Data/MySQL,Data/ODBC,MongoDB,PageCompiler,Util,XML,
 
 $(POCO): $(POCO).tar
 	@mkdir -p lib

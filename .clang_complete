@@ -1,4 +1,7 @@
 -Iinclude
 -Ilib/poco-1.6.1-all/Foundation/include
+-Ilib/poco-1.6.1-all/Crypto/include
+-Ilib/poco-1.6.1-all/Net/include
+-Ilib/poco-1.6.1-all/NetSSL_OpenSSL/include
 -Ilib/poco-1.6.1-all/Data/include
 -Ilib/poco-1.6.1-all/Data/SQLite/include
