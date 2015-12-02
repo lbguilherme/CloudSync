@@ -1,11 +1,11 @@
 #pragma once
 #include <string>
 
-class CloudProvider {
+class RemoteStorage {
 public:
     static void createDatabase(const std::string& databasePath);
-    static CloudProvider* fromDatabase(const std::string& databasePath);
+    static RemoteStorage* fromDatabase(const std::string& databasePath);
 
 private:
-    CloudProvider();
+    RemoteStorage();
 };
