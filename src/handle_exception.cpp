@@ -5,13 +5,13 @@
 #include <regex>
 using namespace std;
 
-static void replace(std::string& s, const std::string& toReplace, const std::string& replaceWith) {
+static void replace(string& s, const string& toReplace, const string& replaceWith) {
     size_t pos;
     while ((pos = s.find(toReplace)) != string::npos)
         s.replace(pos, toReplace.length(), replaceWith);
 }
 
-static void replace(std::string& s, const std::regex& toReplace, const std::string& replaceWith) {
+static void replace(string& s, const regex& toReplace, const string& replaceWith) {
     s = regex_replace(s, toReplace, replaceWith);
 }
 
