@@ -7,7 +7,7 @@ using namespace std;
 
 static void replace(std::string& s, const std::string& toReplace, const std::string& replaceWith) {
     size_t pos;
-    while ((pos = s.find(toReplace)) != -1)
+    while ((pos = s.find(toReplace)) != string::npos)
         s.replace(pos, toReplace.length(), replaceWith);
 }
 
